@@ -1,5 +1,5 @@
 # Script github action kanged from Ivan @reddxae with little bit my modification and addition
-name: Build kernel (KSU Next Dev, susfs, scope-minimized manual hooks 1.4 and BBG integration)
+name: Build kernel (Wild_KSU, susfs, scope-minimized manual hooks 1.4 and BBG integration)
 on:
   #schedule:
     #- cron: '0 4 * * *'  # Runs every day at 04:00 UTC
@@ -45,12 +45,13 @@ jobs:
 
           # Integrate the latest version of Wild_KSU into the source
           curl -LSs "https://raw.githubusercontent.com/WildKernels/Wild_KSU/wild/kernel/setup.sh" | bash -s wild
+          
 
           # Compute version code = commit count + 10200 (same scheme as KernelSU CI)
           COMMITS="$(git -C "./Wild_KSU" rev-list --count HEAD || echo 0)"
           WILD_VER_CODE=$((10200 + COMMITS))
           echo "WILD_VER_CODE=$WILD_VER_CODE" >> "$GITHUB_ENV"
-               
+          mv Wild_KSU/ KernelSU-Next/     
           
           # Integrate latest SUSFS
           git clone -b gki-android13-5.15 --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git susfs4ksu
