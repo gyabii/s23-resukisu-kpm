@@ -149,13 +149,15 @@ diff --git a/KernelSU-Next/kernel/Makefile b/KernelSU-Next/kernel/Makefile
 index 9fec3ef3..8a190993 100644
 --- a/KernelSU-Next/kernel/Makefile
 +++ b/KernelSU-Next/kernel/Makefile
-@@ -32,4 +32,4 @@
+@@ -32,4 +32,6 @@
  KSU_GIT_VERSION := $(shell cd $(srctree)/$(src); /usr/bin/env PATH="$$PATH":/usr/bin:/usr/local/bin git rev-list --count HEAD)
  # ksu_version: major * 10000 + git version + 200 for historical reasons
 -$(eval KSU_VERSION=$(shell expr 10000 + $(KSU_GIT_VERSION) + 200))
 +$(eval KSU_VERSION=$(shell expr 10000 + $(KSU_GIT_VERSION) + 40200))
++KSU_VERSION_FULL= 4.0.0
++ccflags-y += -DKSU_VERSION_FULL=\"$(KSU_VERSION_FULL)\"
  $(info -- KernelSU-Next version: $(KSU_VERSION))
-@@ -140,4 +140,81 @@ ccflags-y += -DEXPECTED_HASH=\"$(KSU_EXPECTED_HASH)\"
+@@ -142,4 +142,81 @@ ccflags-y += -DEXPECTED_HASH=\"$(KSU_EXPECTED_HASH)\"
  ccflags-y += -Wno-implicit-function-declaration -Wno-strict-prototypes -Wno-int-conversion -Wno-gcc-compat
  ccflags-y += -Wno-declaration-after-statement -Wno-unused-function
  
