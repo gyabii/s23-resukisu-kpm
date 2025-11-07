@@ -149,15 +149,46 @@ diff --git a/KernelSU-Next/kernel/Makefile b/KernelSU-Next/kernel/Makefile
 index 9fec3ef3..8a190993 100644
 --- a/KernelSU-Next/kernel/Makefile
 +++ b/KernelSU-Next/kernel/Makefile
-@@ -32,4 +32,6 @@
+@@ -17,6 +17,9 @@
+ 
+ obj-$(CONFIG_KSU) += kernelsu.o
+ 
++MIN_SUPPORTED_KERNEL_VERSION := 12143
++MIN_SUPPORTED_KERNEL_VERSION_FULL := v3.1.8
++
+ ifeq ($(shell test -e $(srctree)/$(src)/../.git; echo $$?),0)
+ KSU_VERSION_TAG := $(shell cd $(srctree)/$(src); /usr/bin/env PATH="$$PATH":/usr/bin:/usr/local/bin git describe --tags --abbrev=0 2>/dev/null)
+ $(info -- KernelSU-Next tag: $(KSU_VERSION_TAG))
+@@ -31,13 +34,24 @@
+ $(shell cd $(srctree)/$(src); /usr/bin/env PATH="$$PATH":/usr/bin:/usr/local/bin [ -f ../.git/shallow ] && git fetch --unshallow)
  KSU_GIT_VERSION := $(shell cd $(srctree)/$(src); /usr/bin/env PATH="$$PATH":/usr/bin:/usr/local/bin git rev-list --count HEAD)
  # ksu_version: major * 10000 + git version + 200 for historical reasons
 -$(eval KSU_VERSION=$(shell expr 10000 + $(KSU_GIT_VERSION) + 200))
-+$(eval KSU_VERSION=$(shell expr 10000 + $(KSU_GIT_VERSION) + 40200))
-+KSU_VERSION_FULL= 3.1.9
+-$(info -- KernelSU-Next version: $(KSU_VERSION))
+-ccflags-y += -DKSU_VERSION=$(KSU_VERSION)
++KSU_VERSION_RAW := $(shell expr 10000 + $(KSU_GIT_VERSION) + 5200)
++$(info -- KernelSU-Next version: $(KSU_VERSION_RAW))
+ else # If there is no .git file, the default version will be passed.
+ $(warning "KSU_GIT_VERSION not defined! It is better to make KernelSU-Next a git submodule!")
+-ccflags-y += -DKSU_VERSION=11998
++KSU_VERSION_RAW := 11998
++endif
++
++KSU_VERSION := $(KSU_VERSION_RAW)
++ifneq ($(filter 1,$(shell [ $(KSU_VERSION) -lt $(MIN_SUPPORTED_KERNEL_VERSION) ] && echo 1 || echo 0)),)
++$(warning -- KernelSU-Next version ($(KSU_VERSION)) is below the minimal supported ($(MIN_SUPPORTED_KERNEL_VERSION)); overriding to the minimum.)
++KSU_VERSION := $(MIN_SUPPORTED_KERNEL_VERSION)
+ endif
++ccflags-y += -DKSU_VERSION=$(KSU_VERSION)
++$(info -- Effective KernelSU-Next version reported to manager: $(KSU_VERSION))
++
++KSU_VERSION_FULL := $(MIN_SUPPORTED_KERNEL_VERSION_FULL)-$(if $(KSU_VERSION_TAG),$(KSU_VERSION_TAG),KernelSU-Next)
 +ccflags-y += -DKSU_VERSION_FULL=\"$(KSU_VERSION_FULL)\"
- $(info -- KernelSU-Next version: $(KSU_VERSION))
-@@ -142,4 +142,81 @@ ccflags-y += -DEXPECTED_HASH=\"$(KSU_EXPECTED_HASH)\"
++$(info -- Effective KernelSU-Next full version reported to manager: $(KSU_VERSION_FULL))
+ 
+ ifeq ($(shell grep -q " current_sid(void)" $(srctree)/security/selinux/include/objsec.h; echo $$?),0)
+ ccflags-y += -DKSU_COMPAT_HAS_CURRENT_SID
+@@ -136,4 +147,81 @@ ccflags-y += -DEXPECTED_HASH=\"$(KSU_EXPECTED_HASH)\"
  ccflags-y += -Wno-implicit-function-declaration -Wno-strict-prototypes -Wno-int-conversion -Wno-gcc-compat
  ccflags-y += -Wno-declaration-after-statement -Wno-unused-function
  
