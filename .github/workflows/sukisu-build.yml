@@ -1,4 +1,4 @@
-name: Build kernel (SukiSU, susfs, scope-minimized manual hooks 1.4 and BBG integration)
+name: Build kernel (SukiSU, susfs, ksu inline hooks and BBG integration)
 on:
   #schedule:
     #- cron: '0 4 * * *'  # Runs every day at 04:00 UTC
@@ -34,7 +34,7 @@ jobs:
           # Determine the current kernel version
           echo "KERNEL_VERSION=$(grep -m1 '^SUBLEVEL =' ./kernel/Makefile | awk '{print $3}')" >> $GITHUB_ENV
           
-      - name: Apply the SukiSU-Ultra, SUSFS, manual hooks patch and Baseband Guard
+      - name: Apply the SukiSU-Ultra, SUSFS and Baseband Guard
         run: |
           set -euxo pipefail
           cd kernel
@@ -73,6 +73,13 @@ jobs:
           #cd KernelSU
           #patch -p1 --fuzz=3 < 10_enable_susfs_for_ksu.patch
           #cd ..
+          # Adding apk_sign for other manager
+          sed -i '415c\
+          return check_v2_signature(path, expected_manager_size, expected_manager_hash)\
+          || check_v2_signature(path, 0x39b, "593d4ce870c02468639efeef631e07ca4d852d63f154be56706229f9a5be0800")   // WKSU\
+          || check_v2_signature(path, 0x3e6, "79e590113c4c4c0c222978e413a5faa801666957b1212a328e46c00c69821bf7");  // KernelSU-NEXT' \
+          KernelSU/kernel/apk_sign.c
+
           
           # Integrate scope-minimized manual KernelSU hooks via a patch
           #curl -L -o manual-hook.patch https://github.com/WildKernels/kernel_patches/raw/f2227a36f02adf3776fc9d432734faf04787f3fa/next/scope_min_manual_hooks_v1.4.patch
@@ -80,7 +87,7 @@ jobs:
           #echo "CONFIG_KSU_KPROBES_HOOK=n" >> ./arch/arm64/configs/gki_defconfig
           #echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./arch/arm64/configs/gki_defconfig
           # SukiSU KPM
-          echo "CONFIG_KPM=y" >> ./arch/arm64/configs/gki_defconfig
+          #echo "CONFIG_KPM=y" >> ./arch/arm64/configs/gki_defconfig
 
           
           # Adding BBG support
@@ -108,7 +115,7 @@ jobs:
           unzip "${GITHUB_WORKSPACE}/anykernel.zip" -d anykernel/
           cp kernel/out/arch/arm64/boot/Image.gz anykernel/
           # Build final name
-          ZIP_NAME="common-5.15.${KERNEL_VERSION}-3d64R-sukisu${SUKISU_VERSION}_${SUKISU_VER_CODE}-susfs${SUSFS_VERSION}-manual-BBG"
+          ZIP_NAME="common-5.15.${KERNEL_VERSION}-3d64R-sukisu${SUKISU_VERSION}-susfs${SUSFS_VERSION}-manual-BBG"
           cd anykernel
           zip -r0 ../"${ZIP_NAME}".zip ./*
           echo "zip_path=$GITHUB_WORKSPACE/${ZIP_NAME}.zip" >> "$GITHUB_OUTPUT"
