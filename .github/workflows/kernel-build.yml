@@ -54,9 +54,9 @@ jobs:
           
           # Integrate 1.5.12 SUSFS
           git clone https://gitlab.com/simonpunk/susfs4ksu.git susfs4ksu
-cd susfs4ksu
-git checkout babf6be1
-cd ..
+          cd susfs4ksu
+          git checkout babf6be1
+          cd ..
 
           # Determine susfs version
           cd susfs4ksu
