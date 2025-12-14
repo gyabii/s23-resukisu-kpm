@@ -74,8 +74,8 @@ jobs:
           echo "CONFIG_KSU_KPROBES_HOOK=n" >> ./arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./arch/arm64/configs/gki_defconfig
           # Sukisu 69_hide.patch
-          curl -L -o 69_hide.patch https://github.com/SukiSU-Ultra/SukiSU_patch/raw/83aa64b7548890bb1f2eff6c990c03a1802df27b/69_hide_stuff.patch
-          patch -p1 --fuzz=3 < 69_hide.patch
+          #curl -L -o 69_hide.patch https://github.com/SukiSU-Ultra/SukiSU_patch/raw/83aa64b7548890bb1f2eff6c990c03a1802df27b/69_hide_stuff.patch
+          #patch -p1 --fuzz=3 < 69_hide.patch
           # SukiSU KPM
           echo "CONFIG_KPM=y" >> ./arch/arm64/configs/gki_defconfig
           sed -i '/config KPM/{:a; n; s/^\s*default n/default y/; ta;}' KernelSU/kernel/Kconfig
@@ -117,7 +117,7 @@ jobs:
           unzip "${GITHUB_WORKSPACE}/anykernel.zip" -d anykernel/
           cp kernel/out/arch/arm64/boot/Image.gz anykernel/
           # Build final name
-          ZIP_NAME="common-5.15.${KERNEL_VERSION}-3d64R-sukisu${SUKISU_VERSION}_KPM-susfs${SUSFS_VERSION}-manual-BBG-$(date +%d%m%y-%H%M%S)"
+          ZIP_NAME="common-5.15.${KERNEL_VERSION}-3d64R-sukisu${SUKISU_VERSION}-${SUKISU_VER_CODE}_KPM-susfs${SUSFS_VERSION}-manual-BBG-$(date +%d%m%y-%H%M%S)"
           cd anykernel
           zip -r0 ../"${ZIP_NAME}".zip ./*
           echo "zip_path=$GITHUB_WORKSPACE/${ZIP_NAME}.zip" >> "$GITHUB_OUTPUT"
