@@ -4,10 +4,10 @@ on:
     #- cron: '0 4 * * *'  # Runs every day at 04:00 UTC
   workflow_dispatch: # Allow manual trigger if needed
   #push:
-    paths:
-      - ".github/workflows/kernel-build.yml"
-      - "rezoss_sukisu_susfs.patch"
-      - "anykernel.zip"
+    #paths:
+      #- '.github/workflows/kernel-build.yml'
+      #- 'rezoss_sukisu_susfs.patch'
+      #- 'anykernel.zip'
 
 jobs:
   build:
