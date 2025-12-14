@@ -961,7 +961,7 @@ index 82161f7f..4f0d4f9d 100644
  
  // Handler functions exported for hook_manager
  int ksu_handle_faccessat(int *dfd, const char __user **filename_user, int *mode,
-                         int *__unused_flags);
+                          int *__unused_flags);
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0) && defined(CONFIG_KSU_SUSFS)
 +int ksu_handle_stat(int *dfd, struct filename **filename, int *flags);
 +#else
