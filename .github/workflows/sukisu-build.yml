@@ -1,4 +1,4 @@
-name: Build kernel (SukiSU, susfs, ksu inline hooks and BBG integration)
+name: Build kernel (SukiSU, SUSFS, Manual Hooks, KPM Patched and BBG integration)
 on:
   #schedule:
     #- cron: '0 4 * * *'  # Runs every day at 04:00 UTC
@@ -6,7 +6,7 @@ on:
   #push:
     paths:
       - ".github/workflows/kernel-build.yml"
-      - "rezoss_susfs1512.patch"
+      - "rezoss_sukisu_susfs.patch"
       - "anykernel.zip"
 
 jobs:
@@ -42,14 +42,9 @@ jobs:
           echo "SUKISU_VERSION=$(curl -s "https://api.github.com/repos/SukiSU-Ultra/SukiSU-Ultra/tags" \
           | jq -r '.[0].name' | sed 's/^v//' | tr -d '.')" >> $GITHUB_ENV
 
-          # Integrate the susfs-main branch of SukiSU into the source
-          #curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
-
           # Integrate the main SukiSU 
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s main
-          
-          
-
+                    
           # Compute version code = commit count + 10200 (same scheme as KernelSU CI)
           COMMITS="$(git -C "./KernelSU" rev-list --count HEAD || echo 0)"
           SUKISU_VER_CODE=$((40000 + COMMITS - 2815))
@@ -67,33 +62,20 @@ jobs:
           cd ..
 
           # Begin susfs patching
-  
           cp -rv ./susfs4ksu/kernel_patches/fs/* fs/
           cp -rv ./susfs4ksu/kernel_patches/include/linux/* include/linux/
-          cp -rv ./susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch ./
-          cp -rv ./susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
-          patch -p1 --fuzz=3 < 50_add_susfs_in_gki-android13-5.15.patch
-          cd KernelSU
-          patch -p1 --fuzz=3 < 10_enable_susfs_for_ksu.patch
-          cd ..
-          # Adding apk_sign for other manager
-          sed -i '/#define EXPECTED_HASH_NEKO/a\
-          \n// WKSU\n#define EXPECTED_SIZE_WKSU   0x39b\n#define EXPECTED_HASH_WKSU   "593d4ce870c02468639efeef631e07ca4d852d63f154be56706229f9a5be0800"\n\
-          \n// KSUN\n#define EXPECTED_SIZE_KSUN   0x3e6\n#define EXPECTED_HASH_KSUN   "79e590113c4c4c0c222978e413a5faa801666957b1212a328e46c00c69821bf7"' KernelSU/kernel/manager_sign.h
+          patch -p1 --fuzz=3 < "${GITHUB_WORKSPACE}/rezoss_sukisu_susfs.patch"                
 
           
-          sed -i '/EXPECTED_SIZE_NEKO/a\
-          {EXPECTED_SIZE_WKSU, EXPECTED_HASH_WKSU}, // WKSU\n\
-          {EXPECTED_SIZE_KSUN, EXPECTED_HASH_KSUN}, // KernelSU-NEXT' KernelSU/kernel/apk_sign.c
-
-          # Enable multi-manager support
-          sed -i '/config KSU_MULTI_MANAGER_SUPPORT/{:a; n; s/^\s*default n/default y/; ta;}' KernelSU/kernel/Kconfig 
                     
-          # Integrate scope-minimized manual KernelSU hooks via a patch
-          #curl -L -o manual-hook.patch https://github.com/WildKernels/kernel_patches/raw/f2227a36f02adf3776fc9d432734faf04787f3fa/next/scope_min_manual_hooks_v1.4.patch
-          #patch -p1 --fuzz=3 < manual-hook.patch
+          # Integrate Sukisu scope_min_manual_hooks_v1.6.patch
+          curl -L -o manual-hook.patch https://github.com/SukiSU-Ultra/SukiSU_patch/raw/83aa64b7548890bb1f2eff6c990c03a1802df27b/hooks/scope_min_manual_hooks_v1.6.patch
+          patch -p1 --fuzz=3 < manual-hook.patch
           echo "CONFIG_KSU_KPROBES_HOOK=n" >> ./arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./arch/arm64/configs/gki_defconfig
+          # Sukisu 69_hide.patch
+          curl -L -o 69_hide.patch https://github.com/SukiSU-Ultra/SukiSU_patch/raw/83aa64b7548890bb1f2eff6c990c03a1802df27b/69_hide_stuff.patch
+          patch -p1 --fuzz=3 < 69_hide.patch
           # SukiSU KPM
           echo "CONFIG_KPM=y" >> ./arch/arm64/configs/gki_defconfig
           sed -i '/config KPM/{:a; n; s/^\s*default n/default y/; ta;}' KernelSU/kernel/Kconfig
@@ -135,7 +117,7 @@ jobs:
           unzip "${GITHUB_WORKSPACE}/anykernel.zip" -d anykernel/
           cp kernel/out/arch/arm64/boot/Image.gz anykernel/
           # Build final name
-          ZIP_NAME="common-5.15.${KERNEL_VERSION}-3d64R-sukisu${SUKISU_VERSION}-susfs${SUSFS_VERSION}-manual-BBG-$(date +%d%m%y-%H%M%S)"
+          ZIP_NAME="common-5.15.${KERNEL_VERSION}-3d64R-sukisu${SUKISU_VERSION}_KPM-susfs${SUSFS_VERSION}-manual-BBG-$(date +%d%m%y-%H%M%S)"
           cd anykernel
           zip -r0 ../"${ZIP_NAME}".zip ./*
           echo "zip_path=$GITHUB_WORKSPACE/${ZIP_NAME}.zip" >> "$GITHUB_OUTPUT"
