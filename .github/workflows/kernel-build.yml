@@ -1,15 +1,11 @@
 # Script github action kanged from Ivan @reddxae with little bit my modification and addition
-name: Build kernel (KSU Next Dev, susfs, scope-minimized manual hooks 1.4 and BBG integration)
+name: Build kernel (KSU Next Dev, susfs 2.0, scope-minimized manual hooks 1.6 and BBG integration)
 on:
   #schedule:
     #- cron: '0 4 * * *'  # Runs every day at 04:00 UTC
   workflow_dispatch: # Allow manual trigger if needed
   #push:
-    paths:
-      - ".github/workflows/kernel-build.yml"
-      - "rezoss_susfs1512.patch"
-      - "anykernel.zip"
-
+    
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -44,7 +40,7 @@ jobs:
           | jq -r '.[0].name' | sed 's/^v//' | tr -d '.')" >> $GITHUB_ENV
 
           # Integrate the latest DEV version of KernelSU Next into the source
-          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s next
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s dev
 
           # Compute version code = commit count + 10200 (same scheme as KernelSU CI)
           COMMITS="$(git -C "./KernelSU-Next" rev-list --count HEAD || echo 0)"
@@ -52,11 +48,9 @@ jobs:
           echo "NEXT_VER_CODE=$NEXT_VER_CODE" >> "$GITHUB_ENV"
                
           
-          # Integrate 1.5.12 SUSFS
+          # Integrate SUSFS 2.0.0
           git clone https://gitlab.com/simonpunk/susfs4ksu.git susfs4ksu
-          cd susfs4ksu
-          git checkout babf6be1
-          cd ..
+      
 
           # Determine susfs version
           cd susfs4ksu
@@ -69,13 +63,12 @@ jobs:
           # Begin susfs patching
           cp -rv ./susfs4ksu/kernel_patches/fs/* fs/
           cp -rv ./susfs4ksu/kernel_patches/include/linux/* include/linux/
-          patch -p1 --fuzz=3 < "${GITHUB_WORKSPACE}/rezoss_susfs1512.patch"
+          patch -p1 --fuzz=3 < "${GITHUB_WORKSPACE}/rezoss_next3_susfs2.patch"
           
-          # Integrate scope-minimized manual KernelSU hooks via a patch
-          curl -L -o manual-hook.patch https://github.com/WildKernels/kernel_patches/raw/f2227a36f02adf3776fc9d432734faf04787f3fa/next/scope_min_manual_hooks_v1.4.patch
+          # Integrate manual hook 1.6
+          curl -L -o manual-hook.patch https://github.com/SukiSU-Ultra/SukiSU_patch/raw/83aa64b7548890bb1f2eff6c990c03a1802df27b/hooks/scope_min_manual_hooks_v1.6.patch
           patch -p1 --fuzz=3 < manual-hook.patch
-          echo "CONFIG_KSU_KPROBES_HOOK=n" >> ./arch/arm64/configs/gki_defconfig
-          echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./arch/arm64/configs/gki_defconfig
+          
 
           # Adding BBG support
           wget -O- https://github.com/vc-teahouse/Baseband-guard/raw/main/setup.sh | bash
