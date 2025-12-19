@@ -44,7 +44,7 @@ jobs:
 
           # Compute version code = commit count + 10200 (same scheme as KernelSU CI)
           COMMITS="$(git -C "./KernelSU-Next" rev-list --count HEAD || echo 0)"
-          NEXT_VER_CODE=$((10200 + COMMITS))
+          NEXT_VER_CODE=$((30000 + COMMITS))
           echo "NEXT_VER_CODE=$NEXT_VER_CODE" >> "$GITHUB_ENV"
                
           
@@ -61,8 +61,9 @@ jobs:
           cd ..
 
           # Begin susfs patching
-          cp -a ./susfs4ksu/kernel_patches/fs/. ./fs/
-          cp -a ./susfs4ksu/kernel_patches/include/linux/. ./include/linux/
+          rsync -a ./susfs4ksu/kernel_patches/fs/ ./fs/
+          rsync -a ./susfs4ksu/kernel_patches/include/linux/ ./include/linux/
+
 
           # Temp fix if don't find
           if [ ! -f ./include/linux/susfs_def.h ]; then
