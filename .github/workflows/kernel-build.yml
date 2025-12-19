@@ -49,7 +49,7 @@ jobs:
                
           
           # Integrate SUSFS 2.0.0
-          git clone https://gitlab.com/simonpunk/susfs4ksu.git susfs4ksu
+          git clone -b gki-android13-5.15 https://gitlab.com/simonpunk/susfs4ksu.git
       
 
           # Determine susfs version
