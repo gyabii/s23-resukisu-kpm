@@ -155,6 +155,7 @@ index 28e5a3a8..63559d7e 100644
 +$(info -- Read: https://gitlab.com/simonpunk/susfs4ksu)
 +endif
  # Keep a new line here!! Because someone may append config
+\ No newline at end of file
 diff --git a/KernelSU-Next/kernel/allowlist.c b/KernelSU-Next/kernel/allowlist.c
 index 5822b1be..b4907053 100644
 --- a/KernelSU-Next/kernel/allowlist.c
@@ -278,7 +279,7 @@ index b2aabf08..c235486f 100644
  #include "ksud.h"
  #include "supercalls.h"
  #include "ksu.h"
-@@ -36,13 +44,24 @@
+@@ -37,13 +45,24 @@
  
  	ksu_supercalls_init();
  
@@ -301,9 +302,9 @@ index b2aabf08..c235486f 100644
  	ksu_ksud_init();
 +#endif // #ifndef CONFIG_KSU_SUSFS
  
- #ifdef MODULE
- #ifndef CONFIG_KSU_DEBUG
-@@ -61,9 +80,11 @@
+     ksu_file_wrapper_init();
+ 
+@@ -64,9 +83,11 @@
  
  	ksu_observer_exit();
  
@@ -678,7 +679,7 @@ index fed3993d..dd6f0bb2 100644
  
  #include "allowlist.h"
  #include "setuid_hook.h"
-@@ -20,13 +23,40 @@
+@@ -20,9 +23,33 @@
  #include "selinux/selinux.h"
  #include "seccomp_cache.h"
  #include "supercalls.h"
@@ -712,14 +713,7 @@ index fed3993d..dd6f0bb2 100644
  static bool ksu_enhanced_security_enabled = false;
  
  static int enhanced_security_feature_get(u64 *value)
- {
-+#ifdef CONFIG_KSU_SUSFS
-+#include <linux/susfs.h>
-+#endif // #ifdef CONFIG_KSU_SUSFS
-     *value = ksu_enhanced_security_enabled ? 1 : 0;
-     return 0;
- }
-@@ -52,6 +82,7 @@
+@@ -52,6 +79,7 @@ static void ksu_install_manager_fd_tw_func(struct callback_head *cb)
      kfree(cb);
  }
  
@@ -727,7 +721,7 @@ index fed3993d..dd6f0bb2 100644
  int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid)
  {
      // we rely on the fact that zygote always call setresuid(3) with same uids
-@@ -120,6 +151,102 @@
+@@ -120,6 +148,102 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid)
  
      return 0;
  }
