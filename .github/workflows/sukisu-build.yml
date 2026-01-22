@@ -39,8 +39,8 @@ jobs:
           set -euxo pipefail
           cd kernel
           
-          # Integrate the main SukiSU 
-          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s main
+          # Integrate the builtin SukiSU 
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s builtin
 
           # Determine the tag of the latest release of SukiSU
           echo "SUKISU_VERSION=$(curl -s "https://api.github.com/repos/SukiSU-Ultra/SukiSU-Ultra/tags" \
