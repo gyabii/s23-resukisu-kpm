@@ -34,12 +34,12 @@ jobs:
           # Determine the current kernel version
           echo "KERNEL_VERSION=$(grep -m1 '^SUBLEVEL =' ./kernel/Makefile | awk '{print $3}')" >> $GITHUB_ENV
           
-      - name: Apply the ReSukiSU-Ultra, SUSFS and Baseband Guard
+      - name: Apply the ReSukiSU, SUSFS and Baseband Guard
         run: |
           set -euxo pipefail
           cd kernel
           
-          # Integrate the builtin SukiSU 
+          # Integrate the main ReSukiSU 
           curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash -s main
 
           # Determine the tag of the latest release of ReSukiSU
@@ -63,6 +63,8 @@ jobs:
           cd ..
 
           # Begin susfs patching
+          cp -rv ./susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
+          cd ./KernelSU && patch -p1 < 10_enable_susfs_for_ksu.patch && cd ..
           cp -rv ./susfs4ksu/kernel_patches/fs/* ./fs/
           cp -rv ./susfs4ksu/kernel_patches/include/linux/* ./include/linux/
           cp ./susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch ./
