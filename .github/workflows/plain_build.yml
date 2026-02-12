@@ -1,0 +1,92 @@
+# Script github action kanged from Ivan @reddxae with little bit my modification and addition
+name: Build kernel (plain kernel for LKM mode)
+on:
+  #schedule:
+    #- cron: '0 4 * * *'  # Runs every day at 04:00 UTC
+  workflow_dispatch: # Allow manual trigger if needed
+  #push:
+    
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4 
+
+      - name: Set up the toolchain
+        run: |
+          sudo apt update
+          sudo apt purge -y firefox
+          sudo apt-mark hold firefox
+          sudo apt upgrade -y
+          sudo apt install -y \
+          bc bison flex build-essential git curl \
+          libelf-dev libssl-dev liblz4-tool lz4 \
+          pahole dwarves cpio \
+          python3 python-is-python3 \
+          tar perl zip zlib1g-dev
+
+      - name: Clone source
+        run: |
+          git clone --depth=1 -b android13-5.15 https://github.com/samsung-sm8550/kernel_samsung_sm8550-common.git kernel
+          
+  
+          # Determine the current kernel version
+          echo "KERNEL_VERSION=$(grep -m1 '^SUBLEVEL =' ./kernel/Makefile | awk '{print $3}')" >> $GITHUB_ENV
+          
+      
+          # Integrate manual hook 1.6
+          #curl -L -o manual-hook.patch https://github.com/SukiSU-Ultra/SukiSU_patch/raw/83aa64b7548890bb1f2eff6c990c03a1802df27b/hooks/scope_min_manual_hooks_v1.6.patch
+          #patch -p1 --fuzz=3 < manual-hook.patch
+          
+
+          # Adding BBG support
+          #wget -O- https://github.com/vc-teahouse/Baseband-guard/raw/main/setup.sh | bash
+          #echo "CONFIG_BBG=y" >> ./arch/arm64/configs/gki_defconfig
+          #sed -i 's/\(CONFIG_LSM="[^"]*\)"/\1,baseband_guard"/' ./arch/arm64/configs/gki_defconfig
+          #sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/lockdown/lockdown,baseband_guard/ } }' ./security/Kconfig
+          
+
+      - name: Set up swap space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 16
+
+      - name: Build the kernel
+        run: |
+          set -euxo pipefail
+          cd kernel
+          chmod +x scripts/build.sh
+          ./scripts/build.sh 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
+
+      - name: Package image with AnyKernel3
+        id: package
+        run: |
+          set -euxo pipefail
+          unzip "${GITHUB_WORKSPACE}/anykernel.zip" -d anykernel/
+          cp kernel/out/arch/arm64/boot/Image.gz anykernel/
+          # Build final name
+          ZIP_NAME="common-5.15.${KERNEL_VERSION}-3d64R-plain-$(date +%d%m%y-%H%M%S)"
+          cd anykernel
+          zip -r0 ../"${ZIP_NAME}".zip ./*
+          echo "zip_path=$GITHUB_WORKSPACE/${ZIP_NAME}.zip" >> "$GITHUB_OUTPUT"
+          echo "zip_name=${ZIP_NAME}" >> "$GITHUB_OUTPUT"
+          cd ..
+
+      - name: Upload the flashable kernel
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{steps.package.outputs.zip_name}}
+          path: anykernel/
+      
+      - name: Create GitHub Release and upload asset
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: experimental_build-${{ github.run_id }} 
+          target_commitish: ${{ github.sha }}
+          name: "Kernel Build by ${{ github.repository }}"
+          generate_release_notes: true
+          files: ${{ steps.package.outputs.zip_path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   
