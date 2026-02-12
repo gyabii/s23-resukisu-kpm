@@ -1,5 +1,5 @@
 # Script github action kanged from Ivan @reddxae with little bit my modification and addition
-name: Build kernel (with scope-minimized manual hooks 1.6)
+name: Build kernel (plain kernel for LKM mode)
 on:
   #schedule:
     #- cron: '0 4 * * *'  # Runs every day at 04:00 UTC
@@ -29,15 +29,15 @@ jobs:
       - name: Clone source
         run: |
           git clone --depth=1 -b android13-5.15 https://github.com/samsung-sm8550/kernel_samsung_sm8550-common.git kernel
-          cd kernel
           
+  
           # Determine the current kernel version
           echo "KERNEL_VERSION=$(grep -m1 '^SUBLEVEL =' ./kernel/Makefile | awk '{print $3}')" >> $GITHUB_ENV
           
       
           # Integrate manual hook 1.6
-          curl -L -o manual-hook.patch https://github.com/SukiSU-Ultra/SukiSU_patch/raw/83aa64b7548890bb1f2eff6c990c03a1802df27b/hooks/scope_min_manual_hooks_v1.6.patch
-          patch -p1 --fuzz=3 < manual-hook.patch
+          #curl -L -o manual-hook.patch https://github.com/SukiSU-Ultra/SukiSU_patch/raw/83aa64b7548890bb1f2eff6c990c03a1802df27b/hooks/scope_min_manual_hooks_v1.6.patch
+          #patch -p1 --fuzz=3 < manual-hook.patch
           
 
           # Adding BBG support
@@ -66,7 +66,7 @@ jobs:
           unzip "${GITHUB_WORKSPACE}/anykernel.zip" -d anykernel/
           cp kernel/out/arch/arm64/boot/Image.gz anykernel/
           # Build final name
-          ZIP_NAME="common-5.15.${KERNEL_VERSION}-3d64R-plain-manual-$(date +%d%m%y-%H%M%S)"
+          ZIP_NAME="common-5.15.${KERNEL_VERSION}-3d64R-plain-$(date +%d%m%y-%H%M%S)"
           cd anykernel
           zip -r0 ../"${ZIP_NAME}".zip ./*
           echo "zip_path=$GITHUB_WORKSPACE/${ZIP_NAME}.zip" >> "$GITHUB_OUTPUT"
