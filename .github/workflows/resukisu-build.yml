@@ -1,3 +1,4 @@
+# build.yml kanged from Rezoss Reza modified to build kernel with ReSukiSU-main
 name: Build kernel (ReSukiSU, Manual Hooks, KPM Patched)
 on:
   #schedule:
