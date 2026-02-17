@@ -99,7 +99,7 @@ jobs:
           unzip "${GITHUB_WORKSPACE}/anykernel.zip" -d anykernel/
           cp kernel/out/arch/arm64/boot/Image.gz anykernel/
           # Build final name
-          ZIP_NAME="common-6.12.58-3d64R-resukisu${RESUKISU_VERSION}-${RESUKISU_VER_CODE}_KPM-manual-$(date +%d%m%y-%H%M%S)"
+          ZIP_NAME="common-5.15.${KERNEL_VERSION}-3d64R-resukisu${RESUKISU_VERSION}-${RESUKISU_VER_CODE}_KPM-manual-$(date +%d%m%y-%H%M%S)"
           cd anykernel
           zip -r0 ../"${ZIP_NAME}".zip ./*
           echo "zip_path=$GITHUB_WORKSPACE/${ZIP_NAME}.zip" >> "$GITHUB_OUTPUT"
