@@ -29,7 +29,7 @@ jobs:
 
       - name: Clone source
         run: |
-          git clone --depth=1 -b android13-5.15-permissive https://github.com/SnowyGround/kernel_samsung_sm8550-common.git kernel
+          git clone --depth=1 -b android13-5.15-permissive https://github.com/gyabii/kernel_samsung_sm8550-common.git kernel
 
           # Determine the current kernel version
           echo "KERNEL_VERSION=$(grep -m1 '^SUBLEVEL =' ./kernel/Makefile | awk '{print $3}')" >> $GITHUB_ENV
