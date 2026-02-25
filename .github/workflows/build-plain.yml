@@ -1,0 +1,79 @@
+# build.yml kanged from Rezoss Reza modified to build plain kernel
+name: Build kernel (plain)
+on:
+  #schedule:
+    #- cron: '0 4 * * *'  # Runs every day at 04:00 UTC
+  workflow_dispatch: # Allow manual trigger if needed
+  #push:
+    #paths:
+      #- '.github/workflows/kernel-build.yml'
+      #- 'anykernel.zip'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4 
+
+      - name: Set up the toolchain
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            bc bison build-essential curl flex \
+            g++-multilib gcc-multilib git gnupg \
+            lib32readline-dev lib32z1-dev \
+            libelf-dev liblz4-tool libssl-dev \
+            lzop zlib1g-dev pahole dwarves cpio zip \
+            python3 python-is-python3 tar perl lz4 jq
+
+      - name: Clone source
+        run: |
+          git clone --depth=1 -b android13-5.15 https://github.com/gyabii/kernel_samsung_sm8550-common.git kernel
+
+          # Determine the current kernel version
+          echo "KERNEL_VERSION=$(grep -m1 '^SUBLEVEL =' ./kernel/Makefile | awk '{print $3}')" >> $GITHUB_ENV
+
+      - name: Set up swap space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 16
+
+      - name: Build the kernel
+        run: |
+          cd kernel
+          chmod +x scripts/build.sh
+          ./scripts/build.sh 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
+
+
+      - name: Package image with AnyKernel3
+        id: package
+        run: |
+          set -euxo pipefail
+          unzip "${GITHUB_WORKSPACE}/anykernel.zip" -d anykernel/
+          cp kernel/out/arch/arm64/boot/Image.gz anykernel/
+          # Build final name
+          ZIP_NAME="common-5.15.${KERNEL_VERSION}-permissive-3d64R-manual-$(date +%d%m%y-%H%M%S)"
+          cd anykernel
+          zip -r0 ../"${ZIP_NAME}".zip ./*
+          echo "zip_path=$GITHUB_WORKSPACE/${ZIP_NAME}.zip" >> "$GITHUB_OUTPUT"
+          echo "zip_name=${ZIP_NAME}" >> "$GITHUB_OUTPUT"
+          cd ..
+
+      - name: Upload the flashable kernel
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{steps.package.outputs.zip_name}}
+          path: anykernel/
+      
+      - name: Create GitHub Release and upload asset
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: experimental_build-${{ github.run_id }} 
+          target_commitish: ${{ github.sha }}
+          name: "Plain Kernel Build by ${{ github.repository }}"
+          generate_release_notes: true
+          files: ${{ steps.package.outputs.zip_path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   
