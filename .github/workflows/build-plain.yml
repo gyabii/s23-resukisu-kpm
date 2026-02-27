@@ -64,7 +64,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: experimental_build-${{ github.run_id }} 
+          tag_name: plain_build-${{ github.run_id }} 
           target_commitish: ${{ github.sha }}
           name: "Plain Kernel Build by ${{ github.repository }}"
           generate_release_notes: true
