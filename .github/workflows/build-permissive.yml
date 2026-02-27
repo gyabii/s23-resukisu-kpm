@@ -1,13 +1,7 @@
 # build.yml kanged from Rezoss Reza modified to build permissive kernel
 name: Build kernel (Permissive)
 on:
-  #schedule:
-    #- cron: '0 4 * * *'  # Runs every day at 04:00 UTC
-  workflow_dispatch: # Allow manual trigger if needed
-  #push:
-    #paths:
-      #- '.github/workflows/kernel-build.yml'
-      #- 'anykernel.zip'
+  workflow_dispatch:
 
 jobs:
   build:
