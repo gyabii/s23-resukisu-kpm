@@ -39,10 +39,9 @@ jobs:
           # Determine the tag of the latest release of Wild KSU
           echo "WILDKSU_VERSION=$(curl -s "https://api.github.com/repos/WildKernels/Wild_KSU/tags" \
           | jq -r '.[0].name' | sed 's/^v//' | tr -d '.')" >> $GITHUB_ENV
-                    
-          # Compute version code = commit count + 10200 (same scheme as KernelSU CI)
+          
           COMMITS="$(git -C "./Wild_KSU" rev-list --count HEAD || echo 0)"
-          WILDKSU_VER_CODE=$((40000 + COMMITS - 1100))
+          WILDKSU_VER_CODE=$((30000 + COMMITS ))
           echo "WILDKSU_VER_CODE=$WILDKSU_VER_CODE" >> "$GITHUB_ENV"
           
           # Clone SUSFS4KSU for kernel patches only (not KSU integration)
