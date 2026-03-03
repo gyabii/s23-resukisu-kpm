@@ -42,7 +42,7 @@ jobs:
                     
           # Compute version code = commit count + 10200 (same scheme as KernelSU CI)
           COMMITS="$(git -C "./Wild_KSU" rev-list --count HEAD || echo 0)"
-          WILDKSU_VER_CODE=$((30000 + COMMITS - 2815))
+          WILDKSU_VER_CODE=$((40000 + COMMITS - 1100))
           echo "WILDKSU_VER_CODE=$WILDKSU_VER_CODE" >> "$GITHUB_ENV"
           
           # Clone SUSFS4KSU for kernel patches only (not KSU integration)
