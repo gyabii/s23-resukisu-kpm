@@ -37,11 +37,11 @@ jobs:
           curl -LSs "https://raw.githubusercontent.com/WildKernels/Wild_KSU/wild/kernel/setup.sh" | bash -s stable
 
           # Determine the tag of the latest release of Wild KSU
-          echo "WILDKSU_VERSION=$(curl -s "https://api.github.com/repos/ReSukiSU/ReSukiSU/tags" \
+          echo "WILDKSU_VERSION=$(curl -s "https://api.github.com/repos/WildKernels/Wild_KSU/tags" \
           | jq -r '.[0].name' | sed 's/^v//' | tr -d '.')" >> $GITHUB_ENV
                     
           # Compute version code = commit count + 10200 (same scheme as KernelSU CI)
-          COMMITS="$(git -C "./KernelSU" rev-list --count HEAD || echo 0)"
+          COMMITS="$(git -C "./Wild_KSU" rev-list --count HEAD || echo 0)"
           WILDKSU_VER_CODE=$((30000 + COMMITS - 2815))
           echo "WILDKSU_VER_CODE=$WILDKSU_VER_CODE" >> "$GITHUB_ENV"
           
@@ -151,7 +151,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: resukisu_build-${{ github.run_id }} 
+          tag_name: wildksu_build-${{ github.run_id }} 
           target_commitish: ${{ github.sha }}
           name: "Wild KSU Kernel Build by ${{ github.repository }}"
           generate_release_notes: true
