@@ -41,7 +41,7 @@ jobs:
           | jq -r '.[0].name' | sed 's/^v//' | tr -d '.')" >> $GITHUB_ENV
           
           COMMITS="$(git -C "./Wild_KSU" rev-list --count HEAD || echo 0)"
-          WILDKSU_VER_CODE=$((30000 + COMMITS ))
+          WILDKSU_VER_CODE=$((30000 + COMMITS))
           echo "WILDKSU_VER_CODE=$WILDKSU_VER_CODE" >> "$GITHUB_ENV"
           
           # Clone SUSFS4KSU for kernel patches only (not KSU integration)
@@ -108,7 +108,7 @@ jobs:
           CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y
           CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y
           CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
-          CONFIG_KSU_SUSFS_SUS_SU=y
+          CONFIG_KSU_SUSFS_SUS_SU=n
           CONFIG_TMPFS_XATTR=y
           CONFIG_TMPFS_POSIX_ACL=y
           EOF
