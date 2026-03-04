@@ -51,12 +51,8 @@ jobs:
           RESUKISU_VER_CODE=$((40000 + COMMITS - 2815))
           echo "RESUKISU_VER_CODE=$RESUKISU_VER_CODE" >> "$GITHUB_ENV"                              
           
-          # Apply syscall hooks
-          curl -L -o hooks.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/scope_min_manual_hooks_v1.6.patch"
-          patch -p1 < hooks.patch || echo "Warning: Syscall hooks failed"
-          
           # Add KSU configs
-          CONFIG_FILE="arch/arm64/configs/defconfig"
+          CONFIG_FILE="arch/arm64/configs/gki_defconfig"
           cat >> "$CONFIG_FILE" << 'EOF'
           CONFIG_KSU=y
           CONFIG_KSU_MANUAL_HOOK=y
