@@ -1,7 +1,7 @@
 # build.yml kanged from Rezoss Reza modified to build kernel with ReSukiSU-main
 # KVS = Kernel Version Spoof 
 # I've spoofed it to 6.6.118
-name: Build kernel (ReSukiSU, KVS, Manual Hooks, KPM Patched)
+name: Build kernel (ReSukiSU, KVS, KPM Patched)
 on:
   workflow_dispatch:
 
@@ -51,17 +51,12 @@ jobs:
           curl -L -o hooks.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/scope_min_manual_hooks_v1.6.patch"
           patch -p1 < hooks.patch || echo "Warning: Syscall hooks failed"
 
-          # Add KSU configs
+          # Add KSU config
           CONFIG_FILE="arch/arm64/configs/gki_defconfig"
-          cat >> "$CONFIG_FILE" << 'EOF'
-          CONFIG_KSU=y
-          CONFIG_KSU_MANUAL_HOOK=y
-          CONFIG_TMPFS_XATTR=y
-          CONFIG_TMPFS_POSIX_ACL=y
-          EOF
+          echo "CONFIG_KSU=y" >> "$CONFIG_FILE"
           
           # ReSukiSU KPM
-          echo "CONFIG_KPM=y" >> ./arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KPM=y" >> "$CONFIG_FILE"
           sed -i '/config KPM/{:a; n; s/^\s*default n/default y/; ta;}' KernelSU/kernel/Kconfig
           
 
