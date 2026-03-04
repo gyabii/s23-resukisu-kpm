@@ -49,8 +49,12 @@ jobs:
           # Compute version code = commit count + 10200 (same scheme as KernelSU CI)
           COMMITS="$(git -C "./KernelSU" rev-list --count HEAD || echo 0)"
           RESUKISU_VER_CODE=$((40000 + COMMITS - 2815))
-          echo "RESUKISU_VER_CODE=$RESUKISU_VER_CODE" >> "$GITHUB_ENV"                              
-          
+          echo "RESUKISU_VER_CODE=$RESUKISU_VER_CODE" >> "$GITHUB_ENV"     
+
+          # Apply syscall hooks
+          curl -L -o hooks.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/scope_min_manual_hooks_v1.6.patch"
+          patch -p1 < hooks.patch || echo "Warning: Syscall hooks failed"
+
           # Add KSU configs
           CONFIG_FILE="arch/arm64/configs/gki_defconfig"
           cat >> "$CONFIG_FILE" << 'EOF'
