@@ -13,13 +13,22 @@ jobs:
       - name: Set up the toolchain
         run: |
           sudo apt update
-          sudo apt install -y \
+          sudo apt install -y --no-install-recommends \
             bc bison build-essential curl flex \
             g++-multilib gcc-multilib git gnupg \
             lib32readline-dev lib32z1-dev \
             libelf-dev liblz4-tool libssl-dev \
             lzop zlib1g-dev pahole dwarves cpio zip \
             python3 python-is-python3 tar perl lz4 jq
+          # The AOSP Clang version currently in use is r574158
+          curl -sSfL --retry 3 --connect-timeout 10 \
+            -o clang.tar.gz \
+            "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/mirror-goog-main-llvm-toolchain-source/clang-r574158.tar.gz" || \
+            { echo "ERROR: Failed to download AOSP Clang! Aborting."; exit 1; }
+          mkdir clang-toolchain
+          tar -xf clang.tar.gz -C clang-toolchain
+          rm clang.tar.gz
+
 
       - name: Clone source
         run: |
@@ -43,15 +52,9 @@ jobs:
           # Compute version code = commit count + 10200 (same scheme as KernelSU CI)
           COMMITS="$(git -C "./KernelSU" rev-list --count HEAD || echo 0)"
           RESUKISU_VER_CODE=$((40000 + COMMITS - 2815))
-          echo "RESUKISU_VER_CODE=$RESUKISU_VER_CODE" >> "$GITHUB_ENV"     
+          echo "RESUKISU_VER_CODE=$RESUKISU_VER_CODE" >> "$GITHUB_ENV"
 
-          # Apply syscall hooks
-          curl -L -o hooks.patch "https://raw.githubusercontent.com/topnotchfreaks/kernel_patches/main/scope_min_manual_hooks_v1.6.patch"
-          patch -p1 < hooks.patch || echo "Warning: Syscall hooks failed"
-
-          # Add KSU config
-          CONFIG_FILE="arch/arm64/configs/gki_defconfig"
-          echo "CONFIG_KSU=y" >> "$CONFIG_FILE"
+          CONFIG_FILE="arch/arm64/configs/vendor/ksu_defconfig"
           
           # ReSukiSU KPM
           echo "CONFIG_KPM=y" >> "$CONFIG_FILE"
@@ -66,8 +69,14 @@ jobs:
       - name: Build the kernel
         run: |
           cd kernel
-          chmod +x scripts/build.sh
-          ./scripts/build.sh 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
+          # Add AOSP Clang to local PATH
+          export PATH="$GITHUB_WORKSPACE/clang-toolchain/bin:$PATH"
+          # Get the current date
+          echo "DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
+          # Generate configuration
+          make -j$(nproc --all) O=out ARCH=arm64 CC=clang LD=ld.lld LLVM=1 LLVM_IAS=1 gki_defconfig vendor/ksu_defconfig || exit 1
+          # Run make
+          make -j$(nproc --all) O=out ARCH=arm64 CC=clang LD=ld.lld LLVM=1 LLVM_IAS=1 || exit 1
       
       - name: KPM Patching
         run: |
@@ -88,7 +97,7 @@ jobs:
           unzip "${GITHUB_WORKSPACE}/anykernel.zip" -d anykernel/
           cp kernel/out/arch/arm64/boot/Image.gz anykernel/
           # Build final name
-          ZIP_NAME="common-5.15.${KERNEL_VERSION}-3d64R-resukisu${RESUKISU_VERSION}-${RESUKISU_VER_CODE}_KPM-manual-$(date +%d%m%y-%H%M%S)"
+          ZIP_NAME="common-5.15.${KERNEL_VERSION}-gyabii-resukisu${RESUKISU_VERSION}-${RESUKISU_VER_CODE}_KPM-${{ env.DATE }}"
           cd anykernel
           zip -r0 ../"${ZIP_NAME}".zip ./*
           echo "zip_path=$GITHUB_WORKSPACE/${ZIP_NAME}.zip" >> "$GITHUB_OUTPUT"
