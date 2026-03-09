@@ -49,7 +49,9 @@ jobs:
           RESUKISU_VER_CODE=$((40000 + COMMITS - 2815))
           echo "RESUKISU_VER_CODE=$RESUKISU_VER_CODE" >> "$GITHUB_ENV"
 
-          CONFIG_FILE="arch/arm64/configs/vendor/ksu_defconfig"
+          # Add KSU config
+          CONFIG_FILE="arch/arm64/configs/gki_defconfig"
+          echo "CONFIG_KSU=y" >> "$CONFIG_FILE"
           
           # ReSukiSU KPM
           echo "CONFIG_KPM=y" >> "$CONFIG_FILE"
@@ -82,6 +84,7 @@ jobs:
       - name: Package image with AnyKernel3
         id: package
         run: |
+          echo "DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
           set -euxo pipefail
           unzip "${GITHUB_WORKSPACE}/anykernel.zip" -d anykernel/
           cp kernel/out/arch/arm64/boot/Image.gz anykernel/
