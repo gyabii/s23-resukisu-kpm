@@ -1,4 +1,8 @@
 # build.yml kanged from Rezoss Reza modified to build kernel with ReSukiSU-main
+# Credits:
+# Edgars Cīrulis - kernel source
+# Rezoss Reza - build.yml
+# reddxae - build.yml
 name: Build kernel (ReSukiSU, KPM Patched)
 on:
   workflow_dispatch:
