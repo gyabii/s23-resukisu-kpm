@@ -2,7 +2,6 @@
 # Credits:
 # Edgars Cīrulis - kernel source
 # Rezoss Reza - build.yml
-# reddxae - build.yml
 name: Build kernel (ReSukiSU, KPM Patched)
 on:
   workflow_dispatch:
@@ -24,14 +23,6 @@ jobs:
             libelf-dev liblz4-tool libssl-dev \
             lzop zlib1g-dev pahole dwarves cpio zip \
             python3 python-is-python3 tar perl lz4 jq
-          # The AOSP Clang version currently in use is r574158
-          curl -sSfL --retry 3 --connect-timeout 10 \
-            -o clang.tar.gz \
-            "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/mirror-goog-main-llvm-toolchain-source/clang-r574158.tar.gz" || \
-            { echo "ERROR: Failed to download AOSP Clang! Aborting."; exit 1; }
-          mkdir clang-toolchain
-          tar -xf clang.tar.gz -C clang-toolchain
-          rm clang.tar.gz
 
 
       - name: Clone source
@@ -73,14 +64,8 @@ jobs:
       - name: Build the kernel
         run: |
           cd kernel
-          # Add AOSP Clang to local PATH
-          export PATH="$GITHUB_WORKSPACE/clang-toolchain/bin:$PATH"
-          # Get the current date
-          echo "DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
-          # Generate configuration
-          make -j$(nproc --all) O=out ARCH=arm64 CC=clang LD=ld.lld LLVM=1 LLVM_IAS=1 gki_defconfig vendor/ksu_defconfig || exit 1
-          # Run make
-          make -j$(nproc --all) O=out ARCH=arm64 CC=clang LD=ld.lld LLVM=1 LLVM_IAS=1 || exit 1
+          chmod +x scripts/build.sh
+          ./scripts/build.sh 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
       
       - name: KPM Patching
         run: |
